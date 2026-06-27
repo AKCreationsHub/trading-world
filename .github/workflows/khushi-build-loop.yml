@@ -1,0 +1,61 @@
+name: KHUSHI Master Execution Loop
+
+# The loop triggers automatically every time code is pushed to the main branch
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-validate:
+    name: Validate Specs & Compile APK
+    # GitHub provides this Ubuntu server for free
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the code from the repository
+      - name: 📥 Clone Repository
+        uses: actions/checkout@v4
+
+      # Step 2: Install Java (Required for Android compilation)
+      - name: ☕ Set up Java 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      # Step 3: Install the Flutter SDK
+      - name: 🦋 Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.22.x'
+          channel: 'stable'
+
+      # Step 4: Fetch all project dependencies
+      - name: 📦 Install Flutter Dependencies
+        run: flutter pub get
+        working-directory: ./mobile_client
+
+      # Step 5: Static Analysis (Module 7 from LOOP.md)
+      - name: 🔍 Run Static Code Analysis
+        run: flutter analyze
+        working-directory: ./mobile_client
+
+      # Step 6: Execute Mathematical & Verification Tests (Module 8 from LOOP.md)
+      - name: 🧪 Run Unit & Logic Tests
+        run: flutter test
+        working-directory: ./mobile_client
+
+      # Step 7: Compile the Production Android APK
+      - name: ⚙️ Build Release APK
+        run: flutter build apk --release
+        working-directory: ./mobile_client
+
+      # Step 8: Upload the compiled APK so you can download it directly
+      - name: 🚀 Upload Compiled APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: KHUSHI-Release-APK
+          path: mobile_client/build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 7
